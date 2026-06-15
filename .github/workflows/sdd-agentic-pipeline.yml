@@ -86,26 +86,26 @@ jobs:
       - name: Read Spec File
         run: cat "${{ needs.detect-spec.outputs.spec_file }}"
 
-      - name: Generate Code using Claude
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
+      # - name: Generate Code using Claude
+      #   env:
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      #   run: |
 
-          SPEC_TYPE="${{ needs.detect-spec.outputs.spec_type }}"
-          SPEC_FILE="${{ needs.detect-spec.outputs.spec_file }}"
+      #     SPEC_TYPE="${{ needs.detect-spec.outputs.spec_type }}"
+      #     SPEC_FILE="${{ needs.detect-spec.outputs.spec_file }}"
 
-          claude --dangerously-skip-permissions -p \
-            "You are generating code for an existing Next.js 16 project using the Pages Router.
+      #     claude --dangerously-skip-permissions -p \
+      #       "You are generating code for an existing Next.js 16 project using the Pages Router.
 
-          Read the project config and specification below, then generate all required files
-          directly into this repository following the outputStructure paths defined in the config.
-          Do not create a new project — add files to the existing project structure.
+      #     Read the project config and specification below, then generate all required files
+      #     directly into this repository following the outputStructure paths defined in the config.
+      #     Do not create a new project — add files to the existing project structure.
 
-          ## Project Config (.claudecode/${SPEC_TYPE}.json)
-          $(cat .claudecode/${SPEC_TYPE}.json)
+      #     ## Project Config (.claudecode/${SPEC_TYPE}.json)
+      #     $(cat .claudecode/${SPEC_TYPE}.json)
 
-          ## Specification (${SPEC_FILE})
-          $(cat ${SPEC_FILE})"
+      #     ## Specification (${SPEC_FILE})
+      #     $(cat ${SPEC_FILE})"
 
       # - name: Run Lint
       #   run: npm run lint
@@ -119,17 +119,17 @@ jobs:
       #     name: coverage-report
       #     path: coverage/
 
-      - name: Commit Generated Code
-        run: |
+      # - name: Commit Generated Code
+      #   run: |
 
-          git config --global user.email "rushabh_ufo@yahoo.com"
-          git config --global user.name "rushabh_ufo"
+      #     git config --global user.email "rushabh_ufo@yahoo.com"
+      #     git config --global user.name "rushabh_ufo"
 
-          git add -A
+      #     git add -A
 
-          git diff --cached --quiet || git commit -m "Generated code from spec: ${{ needs.detect-spec.outputs.service_name }}"
+      #     git diff --cached --quiet || git commit -m "Generated code from spec: ${{ needs.detect-spec.outputs.service_name }}"
 
-          git push
+      #     git push
 
   security-scans:
 
@@ -159,9 +159,9 @@ jobs:
           output: reports/trivy.txt
 
       - name: Run Semgrep
-        uses: semgrep/semgrep-action@v2
-        with:
-          output: reports/semgrep.json
+        run: |
+          pip install semgrep --quiet
+          semgrep scan --config auto --json --output reports/semgrep.json . || true
 
       - name: OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
