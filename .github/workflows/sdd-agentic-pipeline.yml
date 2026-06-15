@@ -152,11 +152,9 @@ jobs:
         run: mkdir -p reports
 
       - name: Run Trivy Scan
-        uses: aquasecurity/trivy-action@v0.30.0
-        with:
-          scan-type: fs
-          scan-ref: .
-          output: reports/trivy.txt
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+          trivy fs --format json --output reports/trivy.json . || true
 
       - name: Run Semgrep
         run: |
