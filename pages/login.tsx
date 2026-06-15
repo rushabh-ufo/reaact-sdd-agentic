@@ -67,7 +67,7 @@ const LoginPage: NextPage<ILoginPageProps> = ({ onSubmit }) => {
   };
 
   const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>
+    event: React.SyntheticEvent<HTMLFormElement>
   ): Promise<void> => {
     event.preventDefault();
 

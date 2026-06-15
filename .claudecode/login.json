@@ -55,6 +55,7 @@
     "Import NextPage from 'next' and annotate the component as NextPage<ILoginPageProps>",
     "The page does NOT use getStaticProps — it has no server-side data dependencies",
     "Use controlled inputs managed via React.useState for email, password, errors, and isSubmitting",
+    "Type form submit handlers as React.SyntheticEvent<HTMLFormElement> — React.FormEvent is deprecated in React 19",
     "Validate on blur and on submit — do NOT validate on every keystroke",
     "Clear the error for a field when the user types in it (onChange handler)",
     "Email validation: non-empty check first, then regex format check",
