@@ -1,0 +1,59 @@
+{
+  "project": {
+    "name": "sdd-poc",
+    "framework": "nextjs",
+    "version": "16",
+    "language": "typescript",
+    "router": "pages",
+    "staticExport": true
+  },
+
+  "generation": {
+    "type": "api",
+    "fileNaming": "kebab-case",
+    "outputStructure": {
+      "handler": "pages/api/{name}.ts",
+      "types": "types/api/{name}.ts",
+      "test": "__tests__/api/{name}.test.ts"
+    }
+  },
+
+  "conventions": {
+    "handlerSignature": "NextApiRequest, NextApiResponse",
+    "strictTyping": true,
+    "noExplicitAny": true,
+    "responseTypes": true,
+    "errorHandling": "try-catch",
+    "supportedMethods": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    "nextTypes": {
+      "request": "NextApiRequest",
+      "response": "NextApiResponse<T>"
+    }
+  },
+
+  "testing": {
+    "runner": "jest",
+    "environment": "node",
+    "mockLibrary": "node-mocks-http",
+    "coverage": true,
+    "conventions": {
+      "describeBlock": "{Name} API handler",
+      "mockSetup": "createMocks<NextApiRequest, NextApiResponse>({ method: 'GET' })",
+      "assertions": "res.statusCode and res._getJSONData()",
+      "minCoverage": 80
+    }
+  },
+
+  "instructions": [
+    "Generate a Next.js API route handler in pages/api/{name}.ts using TypeScript",
+    "Import NextApiRequest and NextApiResponse from 'next'",
+    "Define a typed response interface (e.g. type ResponseData = { ... }) and pass it to NextApiResponse<ResponseData>",
+    "Handle each supported HTTP method explicitly via if/switch on req.method",
+    "Return 405 Method Not Allowed with { error: 'Method not allowed' } for unhandled methods",
+    "Wrap all async logic in try/catch — return 500 with { error: 'Internal server error' } on failure",
+    "Note: API routes are excluded from static export (output: 'export') — generated handlers target SSR or serverless deployment",
+    "Write unit tests in __tests__/api/{name}.test.ts using Jest + node-mocks-http",
+    "Install node-mocks-http as a dev dependency if not present",
+    "Tests must cover each HTTP method, error path (500), and invalid method (405)"
+  ]
+}

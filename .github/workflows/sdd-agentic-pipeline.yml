@@ -1,0 +1,220 @@
+name: SDD Agentic Pipeline
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - master
+    paths:
+      - 'specs/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+
+  detect-spec:
+    runs-on: ubuntu-latest
+
+    outputs:
+      spec_file: ${{ steps.detect.outputs.spec_file }}
+      spec_type: ${{ steps.detect.outputs.spec_type }}
+      service_name: ${{ steps.detect.outputs.service_name }}
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Detect Changed Spec
+        id: detect
+        run: |
+
+          BEFORE="${{ github.event.before }}"
+
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git rev-parse --verify "$BEFORE" >/dev/null 2>&1; then
+            SPEC_FILE=$(git diff --name-only HEAD | grep '^specs/' | head -1)
+          else
+            SPEC_FILE=$(git diff --name-only "$BEFORE" "${{ github.sha }}" | grep '^specs/' | head -1)
+          fi
+
+          if [ -z "$SPEC_FILE" ]; then
+            echo "No spec file found in changed files. Exiting."
+            exit 1
+          fi
+
+          echo "SPEC_FILE=$SPEC_FILE"
+
+          SPEC_TYPE=$(echo $SPEC_FILE | cut -d'/' -f2)
+
+          SERVICE_NAME=$(basename $SPEC_FILE .md)
+
+          echo "spec_file=$SPEC_FILE" >> $GITHUB_OUTPUT
+          echo "spec_type=$SPEC_TYPE" >> $GITHUB_OUTPUT
+          echo "service_name=$SERVICE_NAME" >> $GITHUB_OUTPUT
+
+  generate-code:
+
+    needs: detect-spec
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Claude Code CLI
+        run: |
+          npm install -g @anthropic-ai/claude-code
+
+      - name: Read Spec File
+        run: |
+          cat "${{ needs.detect-spec.outputs.spec_file }}"
+
+      - name: Generate Code using Claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+
+          mkdir -p generated/${{ needs.detect-spec.outputs.service_name }}
+
+          claude-code \
+            --spec "${{ needs.detect-spec.outputs.spec_file }}" \
+            --config ".claudecode/${{ needs.detect-spec.outputs.spec_type }}.json" \
+            --output "generated/${{ needs.detect-spec.outputs.service_name }}"
+
+      - name: Install Dependencies
+        working-directory: generated/${{ needs.detect-spec.outputs.service_name }}
+        run: |
+          npm install
+
+      - name: Run Lint
+        working-directory: generated/${{ needs.detect-spec.outputs.service_name }}
+        run: |
+          npm run lint
+
+      - name: Run Unit Tests
+        working-directory: generated/${{ needs.detect-spec.outputs.service_name }}
+        run: |
+          npm run test -- --ci --coverage
+
+      - name: Upload Coverage Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: generated/${{ needs.detect-spec.outputs.service_name }}/coverage/
+
+      - name: Commit Generated Code
+        run: |
+
+          git config --global user.email "rushabh_ufo@yahoo.com"
+          git config --global user.name "rushabh_ufo"
+
+          git add generated/
+
+          git commit -m "Generated code from spec: ${{ needs.detect-spec.outputs.service_name }}" || echo "No changes to commit"
+
+          git push
+
+  security-scans:
+
+    needs: generate-code
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: "SDD Generated App"
+          path: "."
+          format: "HTML"
+
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: reports/
+
+  create-pr:
+
+    needs:
+      - generate-code
+      - security-scans
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          title: |
+            [SDD Generated] ${{ needs.detect-spec.outputs.service_name }}
+
+          commit-message: |
+            Generated code from specification
+
+          branch: |
+            generated/${{ needs.detect-spec.outputs.service_name }}
+
+          draft: true
+
+          body: |
+
+            ## SDD Agentic Generated Pull Request
+
+            This PR contains AI-generated code from the specification file.
+
+            ### Specification
+            - File: `${{ needs.detect-spec.outputs.spec_file }}`
+            - Type: `${{ needs.detect-spec.outputs.spec_type }}`
+
+            ---
+
+            ## Review Checklist
+
+            - [ ] Code structure validated
+            - [ ] Security concerns reviewed
+            - [ ] Business logic verified
+            - [ ] Unit tests passing
+            - [ ] API contracts validated
+            - [ ] OWASP scan reviewed
+            - [ ] Coverage acceptable
+
+            ---
+
+            ## Generated Artifacts
+
+            - Application code
+            - Unit tests
+            - Lint configuration
+            - Coverage reports
+
+            ---
+            This PR was automatically generated by the SDD Agentic Pipeline.

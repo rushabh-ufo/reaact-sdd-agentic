@@ -1,0 +1,64 @@
+{
+  "project": {
+    "name": "sdd-poc",
+    "framework": "nextjs",
+    "version": "16",
+    "language": "typescript",
+    "router": "pages",
+    "staticExport": true
+  },
+
+  "generation": {
+    "type": "page",
+    "fileNaming": "kebab-case",
+    "outputStructure": {
+      "page": "pages/{name}.tsx",
+      "styles": "styles/{Name}.module.css",
+      "test": "__tests__/pages/{name}.test.tsx"
+    }
+  },
+
+  "conventions": {
+    "componentType": "functional",
+    "dataFetching": "getStaticProps",
+    "cssModules": true,
+    "strictTyping": true,
+    "noExplicitAny": true,
+    "nextTypes": {
+      "page": "NextPage",
+      "staticProps": "GetStaticProps",
+      "staticPaths": "GetStaticPaths"
+    }
+  },
+
+  "testing": {
+    "runner": "jest",
+    "environment": "jsdom",
+    "library": "@testing-library/react",
+    "setupFile": "jest.setup.ts",
+    "coverage": true,
+    "mocks": {
+      "router": "jest.mock('next/router', () => ({ useRouter: () => ({ push: jest.fn(), pathname: '/' }) }))",
+      "link": "jest.mock('next/link', () => ({ default: ({ children }) => children }))"
+    },
+    "conventions": {
+      "describeBlock": "{Name} Page",
+      "renderMethod": "render",
+      "queryInterface": "screen",
+      "minCoverage": 80
+    }
+  },
+
+  "instructions": [
+    "Generate a Next.js page using TypeScript and the Pages Router (pages/ directory)",
+    "Import NextPage from 'next' and annotate the component as NextPage<Props>",
+    "Use getStaticProps for all data fetching — project is configured with output: 'export' (static site)",
+    "Never use getServerSideProps or getInitialProps — they are incompatible with static export",
+    "For pages with dynamic routes use getStaticPaths returning fallback: false",
+    "Use CSS Modules for page-level styles — import styles from '../styles/{Name}.module.css'",
+    "File name must be kebab-case and match the intended URL route (e.g. pages/user-profile.tsx → /user-profile)",
+    "Write unit tests in __tests__/pages/{name}.test.tsx using Jest + @testing-library/react",
+    "Mock next/router and next/link at the top of every test file",
+    "Tests must cover: page renders, props are displayed, navigation links exist"
+  ]
+}

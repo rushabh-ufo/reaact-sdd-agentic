@@ -1,0 +1,57 @@
+{
+  "project": {
+    "name": "sdd-poc",
+    "framework": "nextjs",
+    "version": "16",
+    "language": "typescript",
+    "router": "pages"
+  },
+
+  "generation": {
+    "type": "component",
+    "fileNaming": "PascalCase",
+    "outputStructure": {
+      "component": "components/{Name}/{Name}.tsx",
+      "styles": "components/{Name}/{Name}.module.css",
+      "test": "components/{Name}/{Name}.test.tsx",
+      "index": "components/{Name}/index.ts"
+    }
+  },
+
+  "conventions": {
+    "componentType": "functional",
+    "propsInterface": "I{Name}Props",
+    "defaultExport": true,
+    "namedExport": true,
+    "cssModules": true,
+    "strictTyping": true,
+    "noExplicitAny": true
+  },
+
+  "testing": {
+    "runner": "jest",
+    "environment": "jsdom",
+    "library": "@testing-library/react",
+    "userEvents": "@testing-library/user-event",
+    "setupFile": "jest.setup.ts",
+    "coverage": true,
+    "conventions": {
+      "describeBlock": "{Name}",
+      "renderMethod": "render",
+      "queryInterface": "screen",
+      "minCoverage": 80
+    }
+  },
+
+  "instructions": [
+    "Generate a functional React component written in TypeScript",
+    "Define component props as interface I{Name}Props with strict types — no 'any'",
+    "Annotate the component as React.FC<I{Name}Props>",
+    "Use CSS Modules for all styling — import styles from './{Name}.module.css'",
+    "Export the component as default from {Name}.tsx and re-export via index.ts",
+    "Write unit tests in {Name}.test.tsx using Jest + @testing-library/react",
+    "Tests must cover: renders without crashing, prop variations, user interactions",
+    "Use userEvent from @testing-library/user-event for interaction tests",
+    "Do not use snapshot tests — prefer explicit assertions on rendered output"
+  ]
+}
