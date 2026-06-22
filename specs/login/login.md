@@ -48,7 +48,6 @@ A login page that authenticates users via email and password. The page lives at 
 |----------|-----------------|----------------------------------------|------------------|
 | email    | non-empty       | Email is required                      | on submit + blur |
 | email    | valid format    | Enter a valid email address            | on submit + blur |
-| password | non-empty       | Password is required                   | on submit + blur |
 | password | min 8 chars     | Password must be at least 8 characters | on submit + blur |
 
 - Errors are shown beneath the relevant field.
