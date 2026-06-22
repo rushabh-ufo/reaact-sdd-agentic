@@ -40,6 +40,15 @@ A login page that authenticates users via email and password. The page lives at 
   - Disabled while the form is submitting
   - On successful client-side validation, calls the `onSubmit` prop (or a no-op placeholder) with `{ email, password }`
 
+### Reset Button
+- Label: `Reset`
+- Type: `button`
+- Behaviour:
+  - Clears both `email` and `password` fields to empty strings
+  - Clears all field errors
+  - Does not trigger validation
+  - Disabled while the form is submitting
+
 ---
 
 ## Validation Rules
@@ -131,6 +140,5 @@ The test file must cover:
 - [ ] Page passes `npm run lint` with no errors
 - [ ] All unit tests pass (`npm run test`)
 - [ ] Test coverage ≥ 80% for `pages/login.tsx`
-
 
 
