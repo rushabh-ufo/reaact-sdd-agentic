@@ -1,0 +1,73 @@
+{
+  "project": {
+    "name": "sdd-poc",
+    "framework": "nextjs",
+    "version": "16",
+    "language": "typescript",
+    "router": "pages",
+    "staticExport": true
+  },
+
+  "generation": {
+    "type": "login",
+    "fileNaming": "PascalCase",
+    "outputStructure": {
+      "page": "pages/login.tsx",
+      "styles": "styles/Login.module.css",
+      "test": "__tests__/pages/login.test.tsx"
+    }
+  },
+
+  "conventions": {
+    "componentType": "functional",
+    "dataFetching": "none",
+    "cssModules": true,
+    "strictTyping": true,
+    "noExplicitAny": true,
+    "formHandling": "controlled",
+    "validationTriggers": ["blur", "submit"],
+    "errorClearTrigger": "onChange",
+    "nextTypes": {
+      "page": "NextPage"
+    }
+  },
+
+  "testing": {
+    "runner": "jest",
+    "environment": "jsdom",
+    "library": "@testing-library/react",
+    "userEvents": "@testing-library/user-event",
+    "setupFile": "jest.setup.ts",
+    "coverage": true,
+    "mocks": {
+      "router": "jest.mock('next/router', () => ({ useRouter: () => ({ push: jest.fn(), pathname: '/login' }) }))"
+    },
+    "conventions": {
+      "describeBlock": "Login Page",
+      "renderMethod": "render",
+      "queryInterface": "screen",
+      "minCoverage": 80
+    }
+  },
+
+  "instructions": [
+    "Generate a Next.js login page at pages/login.tsx using TypeScript and the Pages Router",
+    "Import NextPage from 'next' and annotate the component as NextPage<ILoginPageProps>",
+    "The page does NOT use getStaticProps — it has no server-side data dependencies",
+    "Use controlled inputs managed via React.useState for email, password, errors, and isSubmitting",
+    "Type form submit handlers as React.SyntheticEvent<HTMLFormElement> — React.FormEvent is deprecated in React 19",
+    "Validate on blur and on submit — do NOT validate on every keystroke",
+    "Clear the error for a field when the user types in it (onChange handler)",
+    "Email validation: non-empty check first, then regex format check",
+    "Password validation: non-empty check first, then minimum 8 characters check",
+    "Show inline error messages directly beneath the respective input field",
+    "Disable the submit button while isSubmitting is true",
+    "Accept an optional onSubmit prop of type (credentials: { email: string; password: string }) => void for testability",
+    "Use CSS Modules for all styles — import from '../styles/Login.module.css'",
+    "Center the form card on the viewport; max-width 400px on desktop, 100% on mobile",
+    "Error text color must be #d32f2f",
+    "Write unit tests in __tests__/pages/login.test.tsx covering all 7 scenarios listed in the spec",
+    "Mock next/router at the top of the test file",
+    "Use userEvent from @testing-library/user-event for all interaction tests"
+  ]
+}

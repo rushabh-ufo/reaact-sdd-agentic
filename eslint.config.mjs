@@ -1,0 +1,16 @@
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTypescript from 'eslint-config-next/typescript'
+
+const eslintConfig = [
+  { ignores: ['.next/**', 'out/**', 'build/**', 'next-env.d.ts'] },
+  ...nextVitals,
+  ...nextTypescript,
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
+  },
+]
+
+export default eslintConfig
