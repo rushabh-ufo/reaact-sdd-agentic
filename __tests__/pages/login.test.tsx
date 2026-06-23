@@ -78,6 +78,36 @@ describe("Login Page", () => {
     });
   });
 
+  it("clears the fields and errors when Reset is clicked", async () => {
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    const emailInput = screen.getByLabelText(/email/i) as HTMLInputElement;
+    const passwordInput = screen.getByLabelText(
+      /password/i
+    ) as HTMLInputElement;
+
+    await user.type(emailInput, "notanemail");
+    await user.type(passwordInput, "short");
+    await user.click(screen.getByRole("button", { name: /login/i }));
+
+    expect(screen.getByText("Enter a valid email address")).toBeInTheDocument();
+    expect(
+      screen.getByText("Password must be at least 8 characters")
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /reset/i }));
+
+    expect(emailInput.value).toBe("");
+    expect(passwordInput.value).toBe("");
+    expect(
+      screen.queryByText("Enter a valid email address")
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Password must be at least 8 characters")
+    ).not.toBeInTheDocument();
+  });
+
   it("validates on blur — blurring an empty email field shows the email error", async () => {
     const user = userEvent.setup();
     render(<LoginPage />);

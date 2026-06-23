@@ -88,6 +88,12 @@ const LoginPage: NextPage<ILoginPageProps> = ({ onSubmit }) => {
     }
   };
 
+  const handleReset = (): void => {
+    setEmail("");
+    setPassword("");
+    setErrors({});
+  };
+
   return (
     <>
       <Head>
@@ -151,13 +157,23 @@ const LoginPage: NextPage<ILoginPageProps> = ({ onSubmit }) => {
               )}
             </div>
 
-            <button
-              type="submit"
-              className={styles.button}
-              disabled={isSubmitting}
-            >
-              Login
-            </button>
+            <div className={styles.actions}>
+              <button
+                type="submit"
+                className={styles.button}
+                disabled={isSubmitting}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                className={styles.secondaryButton}
+                onClick={handleReset}
+                disabled={isSubmitting}
+              >
+                Reset
+              </button>
+            </div>
           </form>
         </div>
       </div>
