@@ -32,6 +32,15 @@ A login page that authenticates users via email and password. The page lives at 
   - Must not be empty → error: `"Password is required"`
   - Minimum 8 characters → error: `"Password must be at least 8 characters"`
 
+### Confirm Password Field
+- Input type: `password`
+- Label: `Confirm Password`
+- Placeholder: `Re-enter your password`
+- Required: yes
+- Validation:
+  - Must not be empty → error: `"Please confirm your password"`
+  - Must match the `password` field → error: `"Passwords do not match"`
+
 ### Submit Button
 - Label: `Login`
 - Type: `submit`
@@ -40,24 +49,18 @@ A login page that authenticates users via email and password. The page lives at 
   - Disabled while the form is submitting
   - On successful client-side validation, calls the `onSubmit` prop (or a no-op placeholder) with `{ email, password }`
 
-### Reset Button
-- Label: `Reset`
-- Type: `button`
-- Behaviour:
-  - Clears both `email` and `password` fields to empty strings
-  - Clears all field errors
-  - Does not trigger validation
-  - Disabled while the form is submitting
-
 ---
 
 ## Validation Rules
 
-| Field    | Rule            | Error message                          | Trigger          |
-|----------|-----------------|----------------------------------------|------------------|
-| email    | non-empty       | Email is required                      | on submit + blur |
-| email    | valid format    | Enter a valid email address            | on submit + blur |
-| password | min 8 chars     | Password must be at least 8 characters | on submit + blur |
+| Field            | Rule            | Error message                          | Trigger          |
+|------------------|-----------------|----------------------------------------|------------------|
+| email            | non-empty       | Email is required                      | on submit + blur |
+| email            | valid format    | Enter a valid email address            | on submit + blur |
+| password         | non-empty       | Password is required                   | on submit + blur |
+| password         | min 8 chars     | Password must be at least 8 characters | on submit + blur |
+| confirmPassword  | non-empty       | Please confirm your password           | on submit + blur |
+| confirmPassword  | matches password| Passwords do not match                 | on submit + blur |
 
 - Errors are shown beneath the relevant field.
 - Errors clear when the user begins typing in that field (on change).
@@ -69,7 +72,7 @@ A login page that authenticates users via email and password. The page lives at 
 
 ```typescript
 interface ILoginPageProps {
-  onSubmit?: (credentials: { email: string; password: string }) => void;
+  onSubmit?: (credentials: { email: string; password: string; confirmPassword: string }) => void;
 }
 ```
 
@@ -80,13 +83,15 @@ The page component is the Next.js default export and accepts `onSubmit` as an op
 ## State
 
 ```
-email: string          // controlled input value
-password: string       // controlled input value
+email: string            // controlled input value
+password: string         // controlled input value
+confirmPassword: string  // controlled input value
 errors: {
   email?: string
   password?: string
+  confirmPassword?: string
 }
-isSubmitting: boolean  // true while onSubmit promise is resolving
+isSubmitting: boolean    // true while onSubmit promise is resolving
 ```
 
 ---
@@ -119,24 +124,26 @@ __tests__/
 
 The test file must cover:
 
-1. **Renders correctly** — email field, password field, and login button are present in the DOM
-2. **Empty submit** — submitting with both fields empty shows both `"Email is required"` and `"Password is required"` errors
+1. **Renders correctly** — email field, password field, confirm password field, and login button are present in the DOM
+2. **Empty submit** — submitting with all fields empty shows `"Email is required"`, `"Password is required"`, and `"Please confirm your password"` errors
 3. **Invalid email** — submitting with `"notanemail"` in the email field shows `"Enter a valid email address"`
 4. **Short password** — submitting with a password shorter than 8 characters shows `"Password must be at least 8 characters"`
-5. **Clears error on change** — typing in a field that has an error clears that error
-6. **Valid submit** — filling in a valid email and a password ≥ 8 chars calls `onSubmit` with the correct `{ email, password }` payload
-7. **Blur validation** — blurring out of an empty email field shows the email error without pressing submit
+5. **Passwords do not match** — submitting with mismatched password and confirm password shows `"Passwords do not match"`
+6. **Clears error on change** — typing in a field that has an error clears that error
+7. **Valid submit** — filling in a valid email, a password ≥ 8 chars, and a matching confirm password calls `onSubmit` with the correct `{ email, password, confirmPassword }` payload
+8. **Blur validation** — blurring out of an empty email field shows the email error without pressing submit
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `/login` renders the login form with email, password, and submit
+- [ ] `/login` renders the login form with email, password, confirm password, and submit
 - [ ] Submitting an empty form shows inline errors under each field
 - [ ] Email format is validated
 - [ ] Password minimum length is enforced
+- [ ] Confirm password must match password
 - [ ] Errors clear when the user starts typing in the errored field
-- [ ] Valid submission calls `onSubmit` with `{ email, password }`
+- [ ] Valid submission calls `onSubmit` with `{ email, password, confirmPassword }`
 - [ ] Page passes `npm run lint` with no errors
 - [ ] All unit tests pass (`npm run test`)
 - [ ] Test coverage ≥ 80% for `pages/login.tsx`
