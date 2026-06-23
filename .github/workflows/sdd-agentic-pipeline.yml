@@ -1,233 +1,151 @@
-name: SDD Agentic Pipeline
+# Spec: Login Page
+
+## Overview
+
+A login page that authenticates users via email and password. The page lives at the `/login` route and is a statically exported Next.js page using the Pages Router.
+
+---
+
+## Route
+
+`/login` → `pages/login.tsx`
+
+---
+
+## UI Elements
+
+### Email Field
+- Input type: `email`
+- Label: `Email`
+- Placeholder: `Enter your email`
+- Required: yes
+- Validation:
+  - Must not be empty → error: `"Email is required"`
+  - Must match a valid email pattern (RFC 5322 basic: `x@x.x`) → error: `"Enter a valid email address"`
 
-on:
-  push:
-    branches-ignore:
-      - main
-      - master
-    paths:
-      - 'specs/**'
+### Password Field
+- Input type: `password`
+- Label: `Password`
+- Placeholder: `Enter your password`
+- Required: yes
+- Validation:
+  - Must not be empty → error: `"Password is required"`
+  - Minimum 8 characters → error: `"Password must be at least 8 characters"`
+
+### Confirm Password Field
+- Input type: `password`
+- Label: `Confirm Password`
+- Placeholder: `Re-enter your password`
+- Required: yes
+- Validation:
+  - Must not be empty → error: `"Please confirm your password"`
+  - Must match the `password` field → error: `"Passwords do not match"`
+
+### Submit Button
+- Label: `Login`
+- Type: `submit`
+- Behaviour:
+  - Triggers validation on all fields when clicked
+  - Disabled while the form is submitting
+  - On successful client-side validation, calls the `onSubmit` prop (or a no-op placeholder) with `{ email, password }`
+
+---
+
+## Validation Rules
+
+| Field            | Rule            | Error message                          | Trigger          |
+|------------------|-----------------|----------------------------------------|------------------|
+| email            | non-empty       | Email is required                      | on submit + blur |
+| email            | valid format    | Enter a valid email address            | on submit + blur |
+| password         | non-empty       | Password is required                   | on submit + blur |
+| password         | min 8 chars     | Password must be at least 8 characters | on submit + blur |
+| confirmPassword  | non-empty       | Please confirm your password           | on submit + blur |
+| confirmPassword  | matches password| Passwords do not match                 | on submit + blur |
+
+- Errors are shown beneath the relevant field.
+- Errors clear when the user begins typing in that field (on change).
+- Validation runs on blur and on submit; not on every keystroke.
+
+---
+
+## Component Interface
+
+```typescript
+interface ILoginPageProps {
+  onSubmit?: (credentials: { email: string; password: string; confirmPassword: string }) => void;
+}
+```
+
+The page component is the Next.js default export and accepts `onSubmit` as an optional prop to keep it testable without a real API call.
+
+---
+
+## State
+
+```
+email: string            // controlled input value
+password: string         // controlled input value
+confirmPassword: string  // controlled input value
+errors: {
+  email?: string
+  password?: string
+  confirmPassword?: string
+}
+isSubmitting: boolean    // true while onSubmit promise is resolving
+```
+
+---
+
+## File Structure to Generate
+
+```
+pages/
+  login.tsx                        ← Next.js page (default export)
+styles/
+  Login.module.css                 ← CSS Module for layout and form styles
+__tests__/
+  pages/
+    login.test.tsx                 ← Jest + @testing-library/react unit tests
+```
+
+---
+
+## Styles
+
+- Centered card layout (vertically and horizontally centered on the viewport)
+- Full-width input fields with visible focus ring
+- Error messages in red (`#d32f2f`) displayed directly beneath the input
+- Submit button spans the full width of the form
+- Responsive: card is `100%` width on mobile, max `400px` on desktop
+
+---
+
+## Unit Tests (required coverage ≥ 80%)
+
+The test file must cover:
+
+1. **Renders correctly** — email field, password field, confirm password field, and login button are present in the DOM
+2. **Empty submit** — submitting with all fields empty shows `"Email is required"`, `"Password is required"`, and `"Please confirm your password"` errors
+3. **Invalid email** — submitting with `"notanemail"` in the email field shows `"Enter a valid email address"`
+4. **Short password** — submitting with a password shorter than 8 characters shows `"Password must be at least 8 characters"`
+5. **Passwords do not match** — submitting with mismatched password and confirm password shows `"Passwords do not match"`
+6. **Clears error on change** — typing in a field that has an error clears that error
+7. **Valid submit** — filling in a valid email, a password ≥ 8 chars, and a matching confirm password calls `onSubmit` with the correct `{ email, password, confirmPassword }` payload
+8. **Blur validation** — blurring out of an empty email field shows the email error without pressing submit
+
+---
+
+## Acceptance Criteria
+
+- [ ] `/login` renders the login form with email, password, confirm password, and submit
+- [ ] Submitting an empty form shows inline errors under each field
+- [ ] Email format is validated
+- [ ] Password minimum length is enforced
+- [ ] Confirm password must match password
+- [ ] Errors clear when the user starts typing in the errored field
+- [ ] Valid submission calls `onSubmit` with `{ email, password, confirmPassword }`
+- [ ] Page passes `npm run lint` with no errors
+- [ ] All unit tests pass (`npm run test`)
+- [ ] Test coverage ≥ 80% for `pages/login.tsx`
 
-permissions:
-  contents: write
-  pull-requests: write
 
-jobs:
-
-  detect-spec:
-    runs-on: ubuntu-latest
-
-    outputs:
-      spec_file: ${{ steps.detect.outputs.spec_file }}
-      spec_type: ${{ steps.detect.outputs.spec_type }}
-      service_name: ${{ steps.detect.outputs.service_name }}
-
-    steps:
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Detect Changed Spec
-        id: detect
-        run: |
-
-          BEFORE="${{ github.event.before }}"
-
-          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git rev-parse --verify "$BEFORE" >/dev/null 2>&1; then
-            # New branch — diff against main/master to find the spec file introduced on this branch
-            git fetch origin main 2>/dev/null || git fetch origin master 2>/dev/null
-            BASE=$(git rev-parse origin/main 2>/dev/null || git rev-parse origin/master 2>/dev/null)
-            SPEC_FILE=$(git diff --name-only "$BASE" "${{ github.sha }}" | grep '^specs/' | head -1)
-          else
-            SPEC_FILE=$(git diff --name-only "$BEFORE" "${{ github.sha }}" | grep '^specs/' | head -1)
-          fi
-
-          if [ -z "$SPEC_FILE" ]; then
-            echo "No spec file found in changed files. Exiting."
-            exit 1
-          fi
-
-          echo "SPEC_FILE=$SPEC_FILE"
-
-          SPEC_TYPE=$(echo $SPEC_FILE | cut -d'/' -f2)
-
-          SERVICE_NAME=$(basename $SPEC_FILE .md)
-
-          echo "spec_file=$SPEC_FILE" >> $GITHUB_OUTPUT
-          echo "spec_type=$SPEC_TYPE" >> $GITHUB_OUTPUT
-          echo "service_name=$SERVICE_NAME" >> $GITHUB_OUTPUT
-
-  generate-code:
-
-    needs: detect-spec
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup NodeJS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install Project Dependencies
-        run: npm install
-
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Read Spec File
-        run: cat "${{ needs.detect-spec.outputs.spec_file }}"
-
-      - name: Generate Code using Claude
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-
-          SPEC_TYPE="${{ needs.detect-spec.outputs.spec_type }}"
-          SPEC_FILE="${{ needs.detect-spec.outputs.spec_file }}"
-
-          claude --dangerously-skip-permissions -p \
-            "You are generating code for an existing Next.js 16 project using the Pages Router.
-
-          Read the project config and specification below, then generate all required files
-          directly into this repository following the outputStructure paths defined in the config.
-          Do not create a new project — add files to the existing project structure.
-
-          ## Project Config (.claudecode/${SPEC_TYPE}.json)
-          $(cat .claudecode/${SPEC_TYPE}.json)
-
-          ## Specification (${SPEC_FILE})
-          $(cat ${SPEC_FILE})"
-
-      # - name: Run Lint
-      #   run: npm run lint
-
-      # - name: Run Unit Tests
-      #   run: npm run test -- --ci --coverage
-
-      # - name: Upload Coverage Report
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: coverage-report
-      #     path: coverage/
-
-      - name: Commit Generated Code
-        run: |
-
-          git config --global user.email "rushabh_ufo@yahoo.com"
-          git config --global user.name "rushabh_ufo"
-
-          git add -A
-
-          git diff --cached --quiet || git commit -m "Generated code from spec: ${{ needs.detect-spec.outputs.service_name }}"
-
-          git push
-
-  security-scans:
-
-    needs: generate-code
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0
-
-      - name: Pull Latest Commits
-        run: git pull
-
-      - name: Create Reports Directory
-        run: mkdir -p reports
-
-      - name: Run Trivy Scan
-        run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
-          trivy fs --format json --output reports/trivy.json . || true
-
-      - name: Run Semgrep
-        run: |
-          pip install semgrep --quiet
-          semgrep scan --config auto --json --output reports/semgrep.json . || true
-
-      - name: OWASP Dependency Check
-        uses: dependency-check/Dependency-Check_Action@main
-        with:
-          project: "SDD Generated App"
-          path: "."
-          format: "HTML"
-          out: "reports"
-
-      - name: Upload Security Reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: security-reports
-          path: reports/
-
-  create-pr:
-
-    needs:
-      - generate-code
-      - security-scans
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref }}
-
-      - name: Create Pull Request
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-
-          gh pr create \
-            --title "[SDD Generated] ${{ needs.detect-spec.outputs.service_name }}" \
-            --draft \
-            --base main \
-            --body "## SDD Agentic Generated Pull Request
-
-          This PR contains AI-generated code from the specification file.
-
-          ### Specification
-          - File: \`${{ needs.detect-spec.outputs.spec_file }}\`
-          - Type: \`${{ needs.detect-spec.outputs.spec_type }}\`
-
-          ---
-
-          ## Review Checklist
-
-          - [ ] Code structure validated
-          - [ ] Security concerns reviewed
-          - [ ] Business logic verified
-          - [ ] Unit tests passing
-          - [ ] API contracts validated
-          - [ ] OWASP scan reviewed
-          - [ ] Coverage acceptable
-
-          ---
-
-          ## Generated Artifacts
-
-          - Application code
-          - Unit tests
-          - Lint configuration
-          - Coverage reports
-
-          ---
-          This PR was automatically generated by the SDD Agentic Pipeline." \
-            || echo "PR already exists for this branch"
