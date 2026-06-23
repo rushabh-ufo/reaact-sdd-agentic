@@ -4,12 +4,17 @@ import React from "react";
 import styles from "../styles/Login.module.css";
 
 interface ILoginPageProps {
-  onSubmit?: (credentials: { email: string; password: string }) => void;
+  onSubmit?: (credentials: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+  }) => void;
 }
 
 interface IFormErrors {
   email?: string;
   password?: string;
+  confirmPassword?: string;
 }
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -34,9 +39,23 @@ const validatePassword = (value: string): string | undefined => {
   return undefined;
 };
 
+const validateConfirmPassword = (
+  value: string,
+  password: string
+): string | undefined => {
+  if (value === "") {
+    return "Please confirm your password";
+  }
+  if (value !== password) {
+    return "Passwords do not match";
+  }
+  return undefined;
+};
+
 const LoginPage: NextPage<ILoginPageProps> = ({ onSubmit }) => {
   const [email, setEmail] = React.useState<string>("");
   const [password, setPassword] = React.useState<string>("");
+  const [confirmPassword, setConfirmPassword] = React.useState<string>("");
   const [errors, setErrors] = React.useState<IFormErrors>({});
   const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
 
@@ -58,12 +77,28 @@ const LoginPage: NextPage<ILoginPageProps> = ({ onSubmit }) => {
     }
   };
 
+  const handleConfirmPasswordChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    setConfirmPassword(event.target.value);
+    if (errors.confirmPassword !== undefined) {
+      setErrors((prev) => ({ ...prev, confirmPassword: undefined }));
+    }
+  };
+
   const handleEmailBlur = (): void => {
     setErrors((prev) => ({ ...prev, email: validateEmail(email) }));
   };
 
   const handlePasswordBlur = (): void => {
     setErrors((prev) => ({ ...prev, password: validatePassword(password) }));
+  };
+
+  const handleConfirmPasswordBlur = (): void => {
+    setErrors((prev) => ({
+      ...prev,
+      confirmPassword: validateConfirmPassword(confirmPassword, password),
+    }));
   };
 
   const handleSubmit = async (
@@ -73,25 +108,33 @@ const LoginPage: NextPage<ILoginPageProps> = ({ onSubmit }) => {
 
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
+    const confirmPasswordError = validateConfirmPassword(
+      confirmPassword,
+      password
+    );
 
-    if (emailError !== undefined || passwordError !== undefined) {
-      setErrors({ email: emailError, password: passwordError });
+    if (
+      emailError !== undefined ||
+      passwordError !== undefined ||
+      confirmPasswordError !== undefined
+    ) {
+      setErrors({
+        email: emailError,
+        password: passwordError,
+        confirmPassword: confirmPasswordError,
+      });
       return;
     }
 
     setErrors({});
     setIsSubmitting(true);
     try {
-      await Promise.resolve(onSubmit?.({ email, password }));
+      await Promise.resolve(
+        onSubmit?.({ email, password, confirmPassword })
+      );
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleReset = (): void => {
-    setEmail("");
-    setPassword("");
-    setErrors({});
   };
 
   return (
@@ -157,6 +200,38 @@ const LoginPage: NextPage<ILoginPageProps> = ({ onSubmit }) => {
               )}
             </div>
 
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor="confirmPassword">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                className={styles.input}
+                placeholder="Re-enter your password"
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                onBlur={handleConfirmPasswordBlur}
+                aria-invalid={errors.confirmPassword !== undefined}
+                aria-describedby={
+                  errors.confirmPassword !== undefined
+                    ? "confirm-password-error"
+                    : undefined
+                }
+                required
+              />
+              {errors.confirmPassword !== undefined && (
+                <p
+                  id="confirm-password-error"
+                  className={styles.error}
+                  role="alert"
+                >
+                  {errors.confirmPassword}
+                </p>
+              )}
+            </div>
+
             <div className={styles.actions}>
               <button
                 type="submit"
@@ -164,14 +239,6 @@ const LoginPage: NextPage<ILoginPageProps> = ({ onSubmit }) => {
                 disabled={isSubmitting}
               >
                 Login
-              </button>
-              <button
-                type="button"
-                className={styles.secondaryButton}
-                onClick={handleReset}
-                disabled={isSubmitting}
-              >
-                Reset
               </button>
             </div>
           </form>
